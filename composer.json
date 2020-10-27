@@ -1,0 +1,30 @@
+{
+    "name": "slrondonm/sms-notifications-status-change",
+    "description": "@todo",
+    "type": "wordpress-plugin",
+    "license": "GPLv3-or-later",
+    "authors": [
+        {
+            "name": "Grupo Virtualizate",
+            "email": "soporte@virtualizate.com.co",
+            "homepage": "https://virtualizate.com.co/",
+            "role": "Owner"
+        },
+        {
+            "name": "Ing. Sergio L Rondón M",
+            "email": "sl.rondon.m@gmail.com",
+            "role": "Development",
+            "homepage": "https://github.com/slrondonm/"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "\\Virtualizate\\SMSNotifications\\Core\\": "includes/",
+            "\\Virtualizate\\SMSNotifications\\Admin\\": "admin/"
+        }
+    },
+    "minimum-stability": "stable",
+    "require": {
+        "php": "^7.0"
+    }
+}

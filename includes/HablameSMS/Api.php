@@ -1,5 +1,8 @@
 <?php
 namespace SMSNotifications\Core;
+
+use Virtualizate\SMSNotifications\App;
+
 /**
  * The file that defines the core plugin class
  *
@@ -53,9 +56,9 @@ class Api
 
     function __construct()
     {
-        $this->account = get_option('_sms_account');
-        $this->apiKey  = get_option('_sms_api_key');
-        $this->token   = get_option('_sms_token');
+        $this->account = get_option(App::get_prefix('account'));
+        $this->apiKey  = get_option(App::get_prefix('api_key'));
+        $this->token   = get_option(App::get_prefix('token'));
     }
 
     public function send($to_number, $message)

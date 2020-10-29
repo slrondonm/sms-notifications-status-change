@@ -1,5 +1,5 @@
 <?php
-namespace Virtualizate\SMSNotifications\Core;
+namespace Virtualizate\SMSNotifications;
 /**
  * Define the internationalization functionality
  *

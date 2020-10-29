@@ -35,17 +35,21 @@ if ( file_exists( SMS_NOTIFICATIONS_PATH . 'vendor/autoload.php' ) ) {
   require( SMS_NOTIFICATIONS_PATH . 'vendor/autoload.php' );
 }
 
+if ( file_exists( SMS_NOTIFICATIONS_PATH . 'includes/functions.php' ) ) {
+    require( SMS_NOTIFICATIONS_PATH . 'includes/functions.php' );
+  }
+
 function activate_sms_notifications()
 {
-    \Virtualizate\SMSNotifications\Core\Activator::activate();
+    \Virtualizate\SMSNotifications\Activator::activate();
 }
 
 function deactivate_sms_notifications()
 {
-    \Virtualizate\SMSNotifications\Core\Deactivator::deactivate();
+    \Virtualizate\SMSNotifications\Deactivator::deactivate();
 }
 
 register_activation_hook( __FILE__, 'activate_sms_notifications' );
 register_deactivation_hook(__FILE__, 'deactivate_sms_notifications');
 
-\Virtualizate\SMSNotifications\Core\App::run();
+\Virtualizate\SMSNotifications\App::run();

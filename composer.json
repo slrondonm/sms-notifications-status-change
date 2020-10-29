@@ -18,9 +18,9 @@
         }
     ],
     "autoload": {
+        "classmap": ["includes/"],
         "psr-4": {
-            "\\Virtualizate\\SMSNotifications\\Core\\": "includes/",
-            "\\Virtualizate\\SMSNotifications\\Admin\\": "admin/"
+            "Virtualizate\\SMSNotifications\\": "includes/"
         }
     },
     "minimum-stability": "stable",

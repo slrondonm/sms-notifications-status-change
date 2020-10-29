@@ -1,7 +1,8 @@
 <?php
-namespace Virtualizate\SMSNotifications\Core;
+namespace Virtualizate\SMSNotifications;
+
 /**
- * Fired during plugin activation
+ * Fired during plugin deactivation
  *
  * @link       http://virtualizate.com.co
  * @since      0.5.7
@@ -11,16 +12,16 @@ namespace Virtualizate\SMSNotifications\Core;
  */
 
 /**
- * Fired during plugin activation.
+ * Fired during plugin deactivation.
  *
- * This class defines all code necessary to run during the plugin's activation.
+ * This class defines all code necessary to run during the plugin's deactivation.
  *
  * @since      0.5.7
  * @package    Sms_Notification
  * @subpackage Sms_Notification/includes
  * @author     Sergio Rondón <soporte@virtualizate.com.co>
  */
-class Activator {
+class Deactivator {
 
 	/**
 	 * Short Description. (use period)
@@ -29,7 +30,7 @@ class Activator {
 	 *
 	 * @since    0.5.7
 	 */
-	public static function activate() {
+	public static function deactivate() {
 
 	}
 

@@ -1,5 +1,5 @@
 <?php
-namespace Virtualizate\SMSNotifications\Core;
+namespace Virtualizate\SMSNotifications;
 /**
  * Register all actions and filters for the plugin
  *

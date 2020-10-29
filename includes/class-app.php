@@ -1,9 +1,11 @@
 <?php
 namespace Virtualizate\SMSNotifications\Core;
+
 /**
  * 
  * 
  */
+
 class App
 {
     /**
@@ -11,7 +13,14 @@ class App
      *
      * @var [type]
      */
-    protected static $sms_notification;
+    protected static $loader;
+
+    /**
+     * Undocumented variable
+     *
+     * @var [type]
+     */
+    protected static $sms_notifications;
 
     /**
      * Undocumented variable
@@ -31,22 +40,55 @@ class App
             self::$version = SMS_NOTIFICATIONS_VERSION;
         }
 
-        $this->get_sms_notifications();
+        self::get_sms_notifications();
     }
 
+    /**
+     * Undocumented function
+     *
+     * @return void
+     */
+    public static function load_dependencies()
+    {
+    } 
+
+    /**
+     * Undocumented function
+     *
+     * @return void
+     */
     public static function run()
     {
         
     }
 
-    public function get_version()
+    /**
+     * Undocumented function
+     *
+     * @return void
+     */
+    public static function get_loader()
+    {
+        self::$loader;
+    }
+
+    /**
+     * Undocumented function
+     *
+     * @return void
+     */
+    public static function get_version()
     {
         return self::$version;
     }
 
-    public function get_sms_notifications()
+    /**
+     * Undocumented function
+     *
+     * @return void
+     */
+    public static function get_sms_notifications()
     {
-        self::$sms_notification = SMS_NOTIFICATIONS_SLUG;
-        return self::$sms_notification;
+        self::$sms_notifications = SMS_NOTIFICATIONS_SLUG;
     }
 }

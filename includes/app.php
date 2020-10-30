@@ -6,12 +6,18 @@ namespace Virtualizate\SMSNotifications;
  * 
  */
 
+use Virtualizate\SMSNotifications\i18n;
+use Virtualizate\SMSNotifications\HablameSMS\Api;
+
 class App
 {
 	/**
-	 * Undocumented variable
+	 * The loader that's responsible for maintaining and registering all hooks that power
+	 * the plugin.
 	 *
-	 * @var [type]
+	 * @since    0.6.1
+	 * @access   protected
+	 * @var 	 Loader 	$loader    Maintains and registers all hooks for the plugin.
 	 */
 	protected static $loader;
 
@@ -41,11 +47,29 @@ class App
 		}
 
 		self:: get_sms_notifications();
+
+		self::load_dependencies();
+		self::set_locale();
 	}
 
-	public function run()
+	public static function run()
 	{
-		# code...
+		self::$loader->run();
+	}
+
+	/**
+	 * Define the locale for this plugin for internationalization.
+	 *
+	 * Uses the Sms_Notification_i18n class in order to set the domain and to register the hook
+	 * with WordPress.
+	 *
+	 * @since    0.5.7
+	 * @access   private
+	 */
+	private static function set_locale() {
+
+		$plugin_i18n = new i18n();
+		self::$loader->add_action( 'plugins_loaded', $plugin_i18n, 'load_plugin_textdomain' );
 	}
 
 	/**
@@ -53,10 +77,63 @@ class App
 	 *
 	 * @return void
 	 */
-	public static function load_dependencies()
+	private static function load_dependencies()
 	{
+		require_once SMS_NOTIFICATIONS_PATH . 'includes/functions.php';
 
-	} 
+		$api_send = new Api();
+
+		$api_send;
+
+		add_filter('woocommerce_settings_tabs_array', [self::class, 'add_settings_tab'], 50);
+		add_action('woocommerce_settings_tabs_settings_tab_virtualizate', [self::class, 'settings_tab']);
+		add_action('woocommerce_update_options_settings_tab_virtualizate', [self::class, 'update_settings']);
+
+		add_action('woocommerce_order_status_pending', [$api_send, 'virtualizate_send_customer_sms_for_woo_order_status_pending'], 10, 1);
+        add_action('woocommerce_order_status_failed', [$api_send, 'virtualizate_send_customer_sms_for_woo_order_status_failed'], 10, 1);
+        add_action('woocommerce_order_status_on-hold', [$api_send, 'virtualizate_send_customer_sms_for_woo_order_status_on_hold'], 10, 1);
+        add_action('woocommerce_order_status_processing', [$api_send, 'virtualizate_send_customer_sms_for_woo_order_status_processing'], 10, 1);
+        add_action('woocommerce_order_status_completed', [$api_send, 'virtualizate_send_customer_sms_for_woo_order_status_completed'], 10, 1);
+        add_action('woocommerce_order_status_refunded', [$api_send, 'virtualizate_send_customer_sms_for_woo_order_status_refunded'], 10, 1);
+        add_action('woocommerce_order_status_cancelled', [$api_send, 'virtualizate_send_customer_sms_for_woo_order_status_cancelled'], 10, 1);
+
+		/*
+         * Send new order admin SMS
+         */
+		add_action('woocommerce_order_status_processing',[$api_send, 'virtualizate_send_admin_sms_for_woo_new_order'], 10, 1);
+		
+		self::$loader = new Loader();
+	}
+
+	/**
+	 * Undocumented function
+	 *
+	 * @param [type] $settings_tabs
+	 * @return void
+	 */
+	public static function add_settings_tab($settings_tabs)
+	{
+		$settings_tabs['settings_tab_virtualizate'] = __('Virtualizate SMS', self::get_sms_notifications());
+		return $settings_tabs;
+	}
+
+	/**
+	 * Undocumented function
+	 *
+	 * @return void
+	 */
+	public function update_settings() {
+        woocommerce_update_options(self::get_fields());
+    }
+
+	/**
+	 * Undocumented function
+	 *
+	 * @return void
+	 */
+	public function settings_tab() {
+        woocommerce_admin_fields(self::get_fields());
+    }
 
 	/**
 	 * Undocumented function
@@ -73,48 +150,48 @@ class App
 		);
 
 		$fields[] = array(
-			'title'         => 'Enable SMS notifications for these customer actions',
-			'desc'          => 'Pending',
+			'title'         => __('Enable SMS notifications for these customer actions', self::get_sms_notifications()),
+			'desc'          => __('Pending', self::get_sms_notifications()),
 			'id'            => self::get_prefix('send_sms_pending'),
 			'default'       => 'yes',
-			'desc_tip'      => __('Order received (unpaid)', TEXTDOMAIN),
+			'desc_tip'      => __('Order received (unpaid)', self::get_sms_notifications()),
 			'type'          => 'checkbox',
 			'checkboxgroup' => 'start'
 		);
 
 		$fields[] = array(
-			'desc'          => __('Failed', TEXTDOMAIN),
+			'desc'          => __('Failed', self::get_sms_notifications()),
 			'id'            => self::get_prefix('send_sms_failed'),
 			'default'       => 'yes',
-			'desc_tip'      => __('Payment failed or was declined (unpaid)', TEXTDOMAIN),
+			'desc_tip'      => __('Payment failed or was declined (unpaid)', self::get_sms_notifications()),
 			'type'          => 'checkbox',
 			'checkboxgroup' => '',
 			'autoload'      => false
 		);
 		$fields[] = array(
-			'desc'          => __('Processing', TEXTDOMAIN),
+			'desc'          => __('Processing', self::get_sms_notifications()),
 			'id'            => self::get_prefix('send_sms_processing'),
 			'default'       => 'yes',
-			'desc_tip'      => __('Payment received', TEXTDOMAIN),
+			'desc_tip'      => __('Payment received', self::get_sms_notifications()),
 			'type'          => 'checkbox',
 			'checkboxgroup' => '',
 			'autoload'      => false
 		);
 		$fields[] = array(
-			'desc'          => __('Completed', TEXTDOMAIN),
+			'desc'          => __('Completed', self::get_sms_notifications()),
 			'id'            => self::get_prefix('send_sms_completed'),
 			'default'       => 'yes',
-			'desc_tip'      => __('Order fulfilled and complete', TEXTDOMAIN),
+			'desc_tip'      => __('Order fulfilled and complete', self::get_sms_notifications()),
 			'type'          => 'checkbox',
 			'checkboxgroup' => '',
 			'autoload'      => false
 		);
 
 		$fields[] = array(
-			'desc'          => __('On-Hold', TEXTDOMAIN),
+			'desc'          => __('On-Hold', self::get_sms_notifications()),
 			'id'            => self::get_prefix('send_sms_on-hold'),
 			'default'       => 'yes',
-			'desc_tip'      => __('Order received (unpaid)', TEXTDOMAIN),
+			'desc_tip'      => __('Order received (unpaid)', self::get_sms_notifications()),
 			'type'          => 'checkbox',
 			'checkboxgroup' => '',
 			'autoload'      => false
@@ -122,19 +199,19 @@ class App
 
 
 		$fields[] = array(
-			'desc'          => __('Cancelled', TEXTDOMAIN),
+			'desc'          => __('Cancelled', self::get_sms_notifications()),
 			'id'            => self::get_prefix('send_sms_cancelled'),
 			'default'       => 'yes',
-			'desc_tip'      => __('Cancelled by an admin or the customer', TEXTDOMAIN),
+			'desc_tip'      => __('Cancelled by an admin or the customer', self::get_sms_notifications()),
 			'type'          => 'checkbox',
 			'checkboxgroup' => '',
 			'autoload'      => false
 		);
 		$fields[] = array(
-			'desc'          => __('Refunded', TEXTDOMAIN),
+			'desc'          => __('Refunded', self::get_sms_notifications()),
 			'id'            => self::get_prefix('send_sms_refunded'),
 			'default'       => 'yes',
-			'desc_tip'      => __('Refunded by an admin', TEXTDOMAIN),
+			'desc_tip'      => __('Refunded by an admin', self::get_sms_notifications()),
 			'type'          => 'checkbox',
 			'checkboxgroup' => 'end',
 			'autoload'      => false
@@ -144,51 +221,51 @@ class App
 		$fields[] = array(
 			'title'    => 'Default Message',
 			'id'       => self::get_prefix('default_sms_template'),
-			'desc_tip' => __('This message will be sent by default if there are no any text in the following event message fields.', TEXTDOMAIN),
-			'default'  => __('Your order #{{order_id}} is now {{order_status}}. Thank you for shopping at {{shop_name}}.', TEXTDOMAIN),
+			'desc_tip' => __('This message will be sent by default if there are no any text in the following event message fields.', self::get_sms_notifications()),
+			'default'  => __('Your order #{{num_pedido}} is now {{status_pedido}}. Thank you for shopping at {{tienda}}.', self::get_sms_notifications()),
 			'type'     => 'textarea',
 			'css'      => 'min-width:500px;'
 		);
 
 		$fields[] = array(
-			'title' => __('Pending Message', TEXTDOMAIN),
+			'title' => __('Pending Message', self::get_sms_notifications()),
 			'id'    => self::get_prefix('pending_sms_template'),
 			'css'   => 'min-width:500px;',
 			'type'  => 'textarea'
 		);
 		$fields[] = array(
-			'title' => __('Failed Message', TEXTDOMAIN),
+			'title' => __('Failed Message', self::get_sms_notifications()),
 			'id'    => self::get_prefix('failed_sms_template'),
 			'css'   => 'min-width:500px;',
 			'type'  => 'textarea'
 		);
 
 		$fields[] = array(
-			'title' => __('Processing Message', TEXTDOMAIN),
+			'title' => __('Processing Message', self::get_sms_notifications()),
 			'id'    => self::get_prefix('processing_sms_template'),
 			'css'   => 'min-width:500px;',
 			'type'  => 'textarea'
 		);
 		$fields[] = array(
-			'title' => __('Completed Message', TEXTDOMAIN),
+			'title' => __('Completed Message', self::get_sms_notifications()),
 			'id'    => self::get_prefix('completed_sms_template'),
 			'css'   => 'min-width:500px;',
 			'type'  => 'textarea'
 		);
 		$fields[] = array(
-			'title' => __('On-Hold Message', TEXTDOMAIN),
+			'title' => __('On-Hold Message', self::get_sms_notifications()),
 			'id'    => self::get_prefix('on-hold_sms_template'),
 			'css'   => 'min-width:500px;',
 			'type'  => 'textarea'
 		);
 		$fields[] = array(
-			'title' => __('Cancelled Message', TEXTDOMAIN),
+			'title' => __('Cancelled Message', self::get_sms_notifications()),
 			'id'    => self::get_prefix('cancelled_sms_template'),
 			'css'   => 'min-width:500px;',
 			'type'  => 'textarea'
 		);
 		$fields[] = array(
-			'title' => __('Refund Message', TEXTDOMAIN),
+			'title' => __('Refund Message', self::get_sms_notifications()),
 			'id'    => self::get_prefix('refunded_sms_template'),
 			'css'   => 'min-width:500px;',
 			'type'  => 'textarea'
@@ -198,33 +275,33 @@ class App
 		 * Admin notifications
 		 */
 
-		$fields[] = array('type' => 'sectionend', 'id' => TEXTDOMAIN . 'adminsettings');
+		$fields[] = array('type' => 'sectionend', 'id' => self::get_sms_notifications() . 'adminsettings');
 		$fields[] = array(
 			'title' => 'Notification for Admin',
 			'type'  => 'title',
 			'desc'  => 'Enable admin notifications for new customer orders.',
-			'id'    => TEXTDOMAIN . 'adminsettings'
+			'id'    => self::get_prefix('adminsettings')
 		);
 
 		$fields[] = array(
-			'title'   => 'Receive Admin Notifications for New Orders.',
+			'title'   => __('Receive Admin Notifications for New Orders.', self::get_sms_notifications()),
 			'id'      => self::get_prefix('enable_admin_sms'),
 			'default' => 'no',
 			'type'    => 'checkbox'
 		);
 		$fields[] = array(
-			'title'    => 'Admin Mobile Number',
+			'title'    => __('Admin Mobile Number', self::get_sms_notifications()),
 			'id'       => self::get_prefix('admin_sms_recipients'),
-			'desc_tip' => 'Enter admin mobile number begining with your country code.(e.g. 9471XXXXXXXX).',
+			'desc_tip' => __('Enter admin mobile number begining with your country code.(e.g. 3XXXXXXXXX).', self::get_sms_notifications()),
 			'default'  => '',
 			'type'     => 'text'
 		);
 		$fields[] = array(
-			'title'    => 'Message',
+			'title'    => __('Message', self::get_sms_notifications()),
 			'id'       => self::get_prefix('admin_sms_template'),
-			'desc_tip' => 'Customization tags for new order SMS: {{shop_name}}, {{order_id}}, {{order_amount}}. 160 Characters.',
+			'desc_tip' => __('Customization tags for new order SMS: {{tienda}}, {{num_pedido}}, {{total_pedido}}. 160 Characters.', self::get_sms_notifications()),
 			'css'      => 'min-width:500px;',
-			'default'  => 'You have a new customer order for {{shop_name}}. Order #{{order_id}}, Total Value: {{order_amount}}',
+			'default'  => 'You have a new customer order for {{tienda}}. Order #{{num_pedido}}, Total Value: {{total_pedido}}',
 			'type'     => 'textarea'
 		);
 
@@ -232,45 +309,45 @@ class App
 		 * API Credentials
 		 */
 
-		$fields[] = array('type' => 'sectionend', 'id' => TEXTDOMAIN . 'apisettings');
+		$fields[] = array('type' => 'sectionend', 'id' => self::get_sms_notifications() . 'apisettings');
 		$fields[] = array(
-			'title' => __('Virtualizate SMS Settings', TEXTDOMAIN),
+			'title' => __('Virtualizate SMS Settings', self::get_sms_notifications()),
 			'type'  => 'title',
-			'desc'  => 'Provide following details from your Virtualizate SMS account. <a href="https://app.notify.lk/settings/api-keys" target="_blank">Click here</a> to go to API KEY section.',
-			'id'    => TEXTDOMAIN . 'virtualizate_settings'
+			'desc'  => __('Provide following details from your Virtualizate SMS account. <a href="https://virtualizate.com.co" target="_blank">Click here</a> to go to API KEY section.', self::get_sms_notifications()),
+			'id'    => self::get_sms_notifications() . 'virtualizate_settings'
 		);
 
 		$fields[] = array(
-			'title'    => __('User ID', TEXTDOMAIN),
+			'title'    => __('User ID', self::get_sms_notifications()),
 			'id'       => self::get_prefix('account'),
-			'desc_tip' => __('User id available in your NotifyLK account settings page.', TEXTDOMAIN),
+			'desc_tip' => __('User id available in your Virtualizate account settings page.', self::get_sms_notifications()),
 			'type'     => 'text',
 			'css'      => 'min-width:300px;',
 		);
 		$fields[] = array(
-			'title'    => __('API Key', TEXTDOMAIN),
+			'title'    => __('API Key', self::get_sms_notifications()),
 			'id'       => self::get_prefix('api_key'),
-			'desc_tip' => __('API key available in your NotifyLK account.', TEXTDOMAIN),
+			'desc_tip' => __('API key available in your Virtualizate account.', self::get_sms_notifications()),
 			'type'     => 'text',
 			'css'      => 'min-width:300px;',
 		);
 		$fields[] = array(
-			'title'    => __('Token', TEXTDOMAIN),
+			'title'    => __('Token', self::get_sms_notifications()),
 			'id'       => self::get_prefix('token'),
-			'desc_tip' => __('Enter your NotifyLK purchased SenderID.', TEXTDOMAIN),
+			'desc_tip' => __('Enter your Virtualizate Token.', self::get_sms_notifications()),
 			'type'     => 'text',
 			'css'      => 'min-width:300px;',
 		);
 		/*
 		  $fields[] = array(
-		  'desc'    => __('Use if experiencing issues.', TEXTDOMAIN),
-		  'title'   => __('Log Api Errors', TEXTDOMAIN),
+		  'desc'    => __('Use if experiencing issues.', self::get_sms_notifications()),
+		  'title'   => __('Log Api Errors', self::get_sms_notifications()),
 		  'id'      => self::get_prefix('log_errors'),
 		  'default' => 'no',
 		  'type'    => 'checkbox'
 		  );
 		 */
-		$fields[] = array('type' => 'sectionend', 'id' => TEXTDOMAIN . 'customersettings');
+		$fields[] = array('type' => 'sectionend', 'id' => self::get_sms_notifications() . 'customersettings');
 
 
 		/*
@@ -278,31 +355,31 @@ class App
 		 */
 		
 		$avbShortcodes = array(
-			'{{nombre_cliente}}'   => "First name of the customer.",
-			'{{apellido_cliente}}' => "Last name of the customer.",
-			'{{tienda}}'           => 'Your shop name.('.get_bloginfo('name').')',
-			'{{num_pedido}}'       => 'Ther order ID',
-			'{{total_pedido}}'     => "Current order amount",
-			'{{status_pedido}}'    => 'Current order status (Pending, Failed, Processing, etc...)',
-			'{{telefono_cliente}}' => 'Customer mobile number. (If given)'
+			'{{nombre_cliente}}'   => __("First name of the customer.", self::get_sms_notifications()),
+			'{{apellido_cliente}}' => __("Last name of the customer.", self::get_sms_notifications()),
+			'{{tienda}}'           => __('Your shop name.', self::get_sms_notifications()) . '(' . get_bloginfo('name') . ')',
+			'{{num_pedido}}'       => __('Ther order ID', self::get_sms_notifications()),
+			'{{total_pedido}}'     => __("Current order amount", self::get_sms_notifications()),
+			'{{status_pedido}}'    => __('Current order status (Pending, Failed, Processing, etc...)', self::get_sms_notifications()),
+			'{{telefono_cliente}}' => __('Customer mobile number. (If given)', self::get_sms_notifications())
 		);
 
 		$fields[] = array(
-			'title' => __('Available Shortcodes', TEXTDOMAIN),
+			'title' => __('Available Shortcodes', self::get_sms_notifications()),
 			'type'  => 'title',
-			'desc'  => 'These shortcodes can be used in your message body.',
-			'id'    => TEXTDOMAIN . 'notifylk_settings'
+			'desc'  => __('These shortcodes can be used in your message body.', self::get_sms_notifications()),
+			'id'    => self::get_prefix('virtualizate_settings')
 		);
 
 		foreach ($avbShortcodes as $handle => $description) {
 			$fields[] = array(
-				'title' => __($handle, TEXTDOMAIN),
-				'desc'  => __($description, TEXTDOMAIN),
+				'title' => $handle,
+				'desc'  => $description,
 				'type'  => 'text',
 				'css'   => 'display:none;',
 			);
 		}
-		$fields[] = array('type' => 'sectionend', 'id' => TEXTDOMAIN . 'apisettings');
+		$fields[] = array('type' => 'sectionend', 'id' => self::get_sms_notifications() . 'apisettings');
 		return $fields;
 	}
 
@@ -336,10 +413,10 @@ class App
 	* @since 0.1.0
 	*/
     public static function get_prefix( $field_name = null, $before = '', $after = '_' ) {
-		$prefix = $before . SMS_NOTIFICATION_PREFIX . $after;
+		$prefix = $before . SMS_NOTIFICATIONS_PREFIX . $after;
 		return $field_name != null ? $prefix . $field_name : $prefix;
 
-  }
+	}
 
 	/**
 	 * Undocumented function

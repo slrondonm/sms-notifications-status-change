@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: SMS Notificatons in Status Change for WooCoomerce
+ * Plugin Name: SMS Notifications in Status Change for WooCoomerce
  * Plugin URI: https://virtualizate.com.co/
  * Description: @todo.
  * Version: 0.1.0
@@ -52,4 +52,6 @@ function deactivate_sms_notifications()
 register_activation_hook( __FILE__, 'activate_sms_notifications' );
 register_deactivation_hook(__FILE__, 'deactivate_sms_notifications');
 
-\Virtualizate\SMSNotifications\App::run();
+$run_sms_notifications = new \Virtualizate\SMSNotifications\App();
+
+$run_sms_notifications->run();

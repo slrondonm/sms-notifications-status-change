@@ -8,16 +8,16 @@ function format_number($value)
 {
     $number = preg_replace("/[^0-9]/", '', $value);
     if (strlen($number) == 9) {
-        $number = "94" . $number;
+        $number = $number;
     } elseif (strlen($number) == 10 && substr($number, 0, 1) == '0') {
-        $number = "94" . ltrim($number, "0");
+        $number = ltrim($number, "0");
     } elseif (strlen($number) == 12 && substr($number, 0, 3) == '940') {
-        $number = "94" . ltrim($number, "940");
+        $number = ltrim($number, "940");
     }
     return $number;
 }
 
-function placeholders_replacements($message, $order_details)
+function short_code($message, $order_details)
 {
     $placeholders = [
         '{{tienda}}' => get_bloginfo('name'),
